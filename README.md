@@ -15,20 +15,21 @@ Yoink is a minimal, npx-like tool for temporarily downloading, caching, and runn
 
 1.  Clone the repository (or download the source):
 
-```bash
-git clone https://github.com/anshtiwatne/yoink.git
-cd yoink
-```
+    ```bash
+    git clone https://github.com/anshtiwatne/yoink.git
+    cd yoink
+    ```
 
 2.  Install using pip (this will also make the `yoink` command available):
 
-```bash
-pip install .
-```
-For development, you might prefer an editable install:
-```bash
-pip install -e .
-```
+    ```bash
+    pip install .
+    ```
+
+    For development, you might prefer an editable install:
+    ```bash
+    pip install -e .
+    ```
 
 ## Usage
 
@@ -40,18 +41,18 @@ yoink <package_spec>[@version] [command_args...]
 
 - Run `cowsay` with an argument:
 
-```bash
-yoink cowsay "Moo from Yoink!"
-```
+    ```bash
+    yoink cowsay "Moo from Yoink!"
+    ```
 
 - Run `sl` (System Locomotive):
 
-```bash
-yoink sl
-```
+    ```bash
+    yoink sl
+    ```
 
 - Purge the cache:
 
-```bash
-yoink --purge-cache
-```
+    ```bash
+    yoink --purge-cache
+    ```
