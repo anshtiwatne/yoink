@@ -8,8 +8,6 @@ Yoink is a minimal, npx-like tool for temporarily downloading, caching, and runn
 - Downloads packages to a temporary cache (`/tmp/yoink` by default)
 - Executes commands from the yoinked package in an isolated environment
 - Supports specifying package versions (e.g., `htop@3.3.0`)
-- Verbose mode for detailed output
-- Cache purging functionality
 
 ## Installation
 
@@ -51,7 +49,7 @@ yoink <package_spec>[@version] [command_args...]
     yoink sl
     ```
 
-- Purge the cache:
+- Purge yoink's cache:
 
     ```bash
     yoink --purge-cache
