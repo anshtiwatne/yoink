@@ -199,35 +199,95 @@ def main():
         "usr/sbin",
         "usr/local/bin",
     ]
-    new_path_entries = []
+    collected_path_entries_str = []
     for d_name in potential_bin_dirs_relative:
         abs_dir_path = install_prefix / d_name
         if abs_dir_path.is_dir():
-            new_path_entries.append(str(abs_dir_path.resolve()))
+            collected_path_entries_str.append(str(abs_dir_path.resolve()))
 
+    resolved_install_prefix_str = str(install_prefix.resolve())
     if (
         install_prefix.is_dir()
-        and str(install_prefix.resolve()) not in new_path_entries
+        and resolved_install_prefix_str not in collected_path_entries_str
     ):
         if any(
             os.access(item, os.X_OK)
             for item in install_prefix.iterdir()
             if item.is_file()
         ):
-            new_path_entries.append(str(install_prefix.resolve()))
+            collected_path_entries_str.append(resolved_install_prefix_str)
 
-    if new_path_entries:
+    unique_ordered_new_path_entries = []
+    seen_paths_for_path_var = set()
+    for p_str in collected_path_entries_str:
+        if p_str not in seen_paths_for_path_var:
+            unique_ordered_new_path_entries.append(p_str)
+            seen_paths_for_path_var.add(p_str)
+
+    if unique_ordered_new_path_entries:
         current_env["PATH"] = (
-            os.pathsep.join(new_path_entries) + os.pathsep + current_env.get("PATH", "")
+            os.pathsep.join(unique_ordered_new_path_entries)
+            + os.pathsep
+            + current_env.get("PATH", "")
         )
         if args.verbose:
             print(
-                f"🔧 Environment PATH prepended with: {os.pathsep.join(new_path_entries)}",
+                f"🔧 Environment PATH prepended with: {os.pathsep.join(unique_ordered_new_path_entries)}",
                 file=sys.stderr,
             )
     elif args.verbose:
         print(
             f"🔧 No additional bin directories found in {install_prefix} to add to PATH.",
+            file=sys.stderr,
+        )
+
+    potential_lib_dir_names = [
+        "lib",
+        "lib64",
+        "usr/lib",
+        "usr/lib64",
+        "lib/x86_64-linux-gnu",
+        "lib/aarch64-linux-gnu",
+        "lib/arm-linux-gnueabihf",
+        "usr/lib/x86_64-linux-gnu",
+        "usr/lib/aarch64-linux-gnu",
+        "usr/lib/arm-linux-gnueabihf",
+    ]
+    collected_ld_lib_paths_str = []
+    for lib_dir_name in potential_lib_dir_names:
+        abs_lib_dir = install_prefix / lib_dir_name
+        if abs_lib_dir.is_dir():
+            collected_ld_lib_paths_str.append(str(abs_lib_dir.resolve()))
+
+    if (
+        install_prefix.is_dir()
+        and resolved_install_prefix_str not in collected_ld_lib_paths_str
+    ):
+        if any(
+            item.is_file() and ".so" in item.name for item in install_prefix.iterdir()
+        ):
+            collected_ld_lib_paths_str.append(resolved_install_prefix_str)
+
+    unique_ordered_new_ld_lib_paths = []
+    seen_ld_paths = set()
+    for p_str in collected_ld_lib_paths_str:
+        if p_str not in seen_ld_paths:
+            unique_ordered_new_ld_lib_paths.append(p_str)
+            seen_ld_paths.add(p_str)
+
+    if unique_ordered_new_ld_lib_paths:
+        existing_ld_path = current_env.get("LD_LIBRARY_PATH", "")
+        current_env["LD_LIBRARY_PATH"] = os.pathsep.join(
+            unique_ordered_new_ld_lib_paths
+        ) + (os.pathsep + existing_ld_path if existing_ld_path else "")
+        if args.verbose:
+            print(
+                f"🔧 Environment LD_LIBRARY_PATH prepended with: {os.pathsep.join(unique_ordered_new_ld_lib_paths)}",
+                file=sys.stderr,
+            )
+    elif args.verbose:
+        print(
+            f"🔧 No additional library directories found in {install_prefix} to add to LD_LIBRARY_PATH.",
             file=sys.stderr,
         )
 
@@ -237,8 +297,6 @@ def main():
             f"🚀 Executing: {' '.join(full_command_to_exec)} (resolved from {executable_path})",
             file=sys.stderr,
         )
-        if "PATH" in current_env:
-            print(f"   with PATH: {current_env['PATH']}", file=sys.stderr)
 
     try:
         os.execvpe(str(executable_path), full_command_to_exec, current_env)
@@ -247,7 +305,6 @@ def main():
             f"❌ Failed to execute '{command_to_run}' (from {executable_path}): {e}",
             file=sys.stderr,
         )
-
         sys.exit(127)
 
 
